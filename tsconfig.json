@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": ["miniprogram-api-typings"],
+    "downlevelIteration": true,
+    "lib": ["ES2022"],
+    "target": "ES2015",
+    "moduleResolution": "Node",
+    "declaration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist"],
+}
