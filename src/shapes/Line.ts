@@ -9,6 +9,9 @@ export class Line extends Shape {
 
   constructor(config: LineConfig) {
     super(config)
+    if (config.points.length < 2 || config.points.length % 2 !== 0) {
+      throw new Error('点的个数需为2的倍数')
+    }
     this.points = config.points
     this.stroke = true
   }
@@ -28,5 +31,13 @@ export class Line extends Shape {
       ctx.lineTo(this.points[i], this.points[i + 1])
     }
     ctx.stroke()
+  }
+
+  append(points: number[]) {
+    if (points.length < 2 || points.length % 2 !== 0) {
+      console.warn('append failed')
+      return
+    }
+    this.points = this.points.concat(points)
   }
 }
