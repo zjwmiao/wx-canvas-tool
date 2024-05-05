@@ -18,8 +18,4 @@ export class Rect extends Shape {
   draw(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     ctx.rect(this.transformation[4], this.transformation[5], this.width, this.height)
   }
-
-  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
-    this.draw(ctx)
-  }
 }

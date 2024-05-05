@@ -24,18 +24,9 @@ export class Line extends Shape {
     }
   }
 
-  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
-    ctx.moveTo(this.points[0], this.points[1])
-    const len = this.points.length
-    for (let i = 2; i < len; i += 2) {
-      ctx.lineTo(this.points[i], this.points[i + 1])
-    }
-    ctx.stroke()
-  }
-
   append(points: number[]) {
     if (points.length < 2 || points.length % 2 !== 0) {
-      console.warn('append failed')
+      console.warn('点的个数需为2的倍数')
       return
     }
     this.points = this.points.concat(points)

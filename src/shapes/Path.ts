@@ -22,15 +22,6 @@ export class Path extends Shape {
     }
   }
 
-  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D): void {
-    if (this.stroke) {
-      ctx.stroke(this.path)
-    }
-    if (this.fill) {
-      ctx.fill(this.path)
-    }
-  }
-
   drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     ctx.beginPath()
     if (this.style) {

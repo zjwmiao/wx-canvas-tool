@@ -34,9 +34,4 @@ export class RoundRect extends Rect {
     ctx.arcTo(0, 0, 0 + br[0], 0, br[0])
     ctx.closePath()
   }
-
-  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
-    this.draw(ctx)
-    ctx.fill()
-  }
 }

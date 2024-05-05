@@ -15,9 +15,4 @@ export class Circle extends Shape {
   draw(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     ctx.arc(0, 0, this.radius, 0, Math.PI * 2)
   }
-
-  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
-    ctx.arc(0, 0, this.radius, 0, Math.PI * 2)
-    ctx.fill()
-  }
 }

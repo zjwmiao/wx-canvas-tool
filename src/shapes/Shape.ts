@@ -71,7 +71,9 @@ export abstract class Shape {
 
   abstract draw(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D): void
 
-  abstract drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D): void
+  drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
+    this.draw(ctx)
+  }
 
   drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     ctx.save()
