@@ -29,7 +29,7 @@ export abstract class Shape {
   protected transformation = mat2d.create()
 
   constructor(config: ShapeConfig) {
-    this.zIndex = config.zIndex
+    this.zIndex = config.zIndex ?? 0
     this.x = config.x
     this.y = config.y
     this.stroke = config.stroke

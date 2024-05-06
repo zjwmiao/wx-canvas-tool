@@ -7,7 +7,7 @@ interface PathConfig extends ShapeConfig {
 export class Path extends Shape {
   path: WechatMiniprogram.Path2D
 
-  constructor(canvas: WechatMiniprogram.Canvas, config: PathConfig) {
+  constructor(config: PathConfig, canvas: WechatMiniprogram.Canvas) {
     super(config)
     this.path = canvas.createPath2D()
     config.pathFunc(this.path)
@@ -22,7 +22,7 @@ export class Path extends Shape {
     }
   }
 
-  drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
+  /* drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     ctx.beginPath()
     if (this.style) {
       ctx.save()
@@ -39,5 +39,5 @@ export class Path extends Shape {
     ctx.beginPath()
     this.drawHit(ctx)
     ctx.restore()
-  }
+  } */
 }
