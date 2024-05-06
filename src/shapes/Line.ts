@@ -9,10 +9,17 @@ export class Line extends Shape {
 
   constructor(config: LineConfig) {
     super(config)
-    if (config.points.length < 2 || config.points.length % 2 !== 0) {
+    const points = config.points
+    if (points.length < 2 || points.length % 2 !== 0) {
       throw new Error('点的个数需为2的倍数')
     }
-    this.points = config.points
+    this.x = points[0]
+    this.y = points[1]
+    for (let i = 0; i < points.length; i += 2) {
+      points[i] -= this.x
+      points[i + 1] -= this.y
+    }
+    this.points = points
     this.stroke = true
   }
 
@@ -28,6 +35,10 @@ export class Line extends Shape {
     if (points.length < 2 || points.length % 2 !== 0) {
       console.warn('点的个数需为2的倍数')
       return
+    }
+    for (let i = 0; i < points.length; i += 2) {
+      points[i] -= this.x
+      points[i + 1] -= this.y
     }
     this.points = this.points.concat(points)
   }
