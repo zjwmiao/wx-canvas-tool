@@ -40,9 +40,17 @@ export class Text extends Rect {
     this.needCalc = true
   }
 
+  get baseline() {
+    return this._baseline
+  }
+
   set align(val: Align) {
     this._align = val
     this.needCalc = true
+  }
+
+  get align() {
+    return this._align
   }
 
   set maxWidth(val: number) {
@@ -50,9 +58,17 @@ export class Text extends Rect {
     this.needCalc = true
   }
 
+  get maxWidth() {
+    return this._maxWidth
+  }
+
   set overflow(val: string) {
     this._overflow = val
     this.needCalc = true
+  }
+
+  get overfow() {
+    return this._overflow
   }
 
   set text(val: string) {
@@ -60,9 +76,17 @@ export class Text extends Rect {
     this.needCalc = true
   }
 
+  get text() {
+    return this._text
+  }
+
   set font(val: string) {
     this._font = val
     this.needCalc = true
+  }
+
+  get font() {
+    return this._font
   }
 
   calc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
