@@ -1,6 +1,12 @@
 import { mat2d } from 'gl-matrix'
 import { Shape } from './shapes/Shape'
 import { Image } from './shapes/Image'
+import { Circle } from './shapes/Circle'
+import { Rect } from './shapes/Rect'
+import { Text } from './shapes/Text'
+import { Line } from './shapes/Line'
+import { RoundRect } from './shapes/RoundRect'
+import { Path } from './shapes/Path'
 
 type Point = {
   x: number
@@ -70,9 +76,34 @@ class Animation {
   }
 }
 
-export class CanvasTool {
+type GlobalConfig = {
+  /**
+   * 画布的id
+   */
+  id: string
+  /**
+   * 页面实例
+   */
+  pageInstance: any
+  /**
+   * 初始化完成后的回调函数
+   */
+  afterInit?: (canvasTool: CanvasTool) => void
+  /**
+   * 可拖动
+   */
+  draggable?: boolean
+  /**
+   * 可缩放
+   */
+  zoomable?: boolean
+}
+
+class CanvasTool {
   initiated = false
   id: string
+  draggable: boolean
+  zoomable: boolean
   private pageInstance: any
   private prevFingerX: number = null
   private prevFingerY: number = null
@@ -104,10 +135,12 @@ export class CanvasTool {
   private offscreenCtx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D
   private imgsLoadPromises: Promise<any>[] = []
 
-  constructor({ id, pageInstance, afterInit }) {
-    this.pageInstance = pageInstance
-    this.id = id
+  constructor(config: GlobalConfig) {
+    this.pageInstance = config.pageInstance
+    this.id = config.id
     this.rgb = rgbGenerator()
+    this.draggable = config.draggable ?? false
+    this.zoomable = config.zoomable ?? false
     getNodeInfo(this.pageInstance, this.id).then(nodeInfo => {
       const { node, width, height } = nodeInfo
       this.canvas = node
@@ -127,7 +160,7 @@ export class CanvasTool {
       this.offscreenCtx = this.offscreen.getContext('2d')
       this.offscreenCtx.scale(dpr, dpr)
       this.initiated = true
-      if (afterInit) afterInit(this)
+      if (config.afterInit) config.afterInit(this)
     }).catch(e => {
       console.log('init failed', e)
     })
@@ -178,11 +211,17 @@ export class CanvasTool {
   }
 
   /**
-   * 整个画布的偏移，多次调用偏移量叠加
+   * 整个画布的偏移，多次调用偏移量叠加，不传参数返回当前偏移量
    * @param x 横轴偏移
    * @param y 纵轴偏移
+   * @returns 当前偏移量
    */
-  translate(x: number, y: number) {
+  translate(x?: number, y?: number) {
+    if (arguments.length === 0) 
+      return {
+        x: this.currentTransform[4],
+        y: this.currentTransform[5]
+      }
     mat2d.translate(this.currentTransform, this.currentTransform, [ x, y ])
   }
 
@@ -197,11 +236,17 @@ export class CanvasTool {
   }
 
   /**
-   * 整个画布的缩放，多次调用会累乘缩放倍率
+   * 整个画布的缩放，多次调用会累乘缩放倍率，不传参数返回当前缩放倍率
    * @param x 横轴缩放
    * @param y 纵轴缩放
+   * @returns 当前缩放倍率
    */
-  scale(x: number, y: number) {
+  scale(x?: number, y?: number) {
+    if (arguments.length === 0) 
+      return {
+        x: this.currentTransform[0],
+        y: this.currentTransform[3]
+      }
     mat2d.scale(this.currentTransform, this.currentTransform, [ x, y ])
   }
 
@@ -216,13 +261,37 @@ export class CanvasTool {
   }
 
   /**
+   * 设置当前变换矩阵
+   * @param matrix 变换矩阵
+   */
+  setTransform(matrix: number[]) {
+    mat2d.copy(this.currentTransform, matrix as mat2d)
+  }
+
+  /**
+   * 重置画布变换
+   */
+  resetTransform() {
+    mat2d.identity(this.currentTransform)
+    mat2d.scale(this.currentTransform, this.currentTransform, [ this.dpr, this.dpr ])
+  }
+
+  /**
    * 计算文本高度宽度
-   * @param text 文本
-   * @param font 字体
+   * @param text 文本，可以传入Text实例或者字符串
+   * @param font 字体，如'12px sans-serif'，若第一个参数传入Text实例且font未指定，则使用其font属性
    * @returns 
    */
-  calcText(text: string, font: string) {
+  calcText(text: string | Text, font?: string) {
     this.ctx.save()
+    let _text: string
+    if (text instanceof Text) {
+      _text = text.text
+      font ??= text.font
+    }
+    if (typeof text === 'string') {
+      _text = text
+    }
     this.ctx.font = font
     const {
       width,
@@ -230,7 +299,7 @@ export class CanvasTool {
       actualBoundingBoxDescent,
       actualBoundingBoxLeft,
       actualBoundingBoxRight,
-    } = this.ctx.measureText(text)
+    } = this.ctx.measureText(_text)
     this.ctx.restore()
     return {
       width,
@@ -254,7 +323,7 @@ export class CanvasTool {
       if (this.draggingShape) {
         this.draggingShape.x += xOffset / this.currentTransform[0]
         this.draggingShape.y += yOffset / this.currentTransform[3]
-      } else {
+      } else if (this.draggable) {
         this.currentTransform[4] += xOffset
         this.currentTransform[5] += yOffset
       }
@@ -279,7 +348,7 @@ export class CanvasTool {
       this.draggingAnimationId = this.animExecutorFunc(this.frame)
     }
   }
-  
+
   /**
    * 开始一个动画
    * @param frame 帧回调
@@ -304,7 +373,7 @@ export class CanvasTool {
       if (shape && shape.draggable) {
         this.draggingShape = shape
       }
-    } else if (touches.length === 2) {
+    } else if (touches.length === 2 && this.zoomable) {
       this.zoomCenter = await this.getRealPosition((touches[0].x + touches[1].x) / 2, (touches[0].y + touches[1].y) / 2)
     }
   }
@@ -316,7 +385,7 @@ export class CanvasTool {
     this.zoomCenter = null
     this.draggingShape = null
   }
-  
+
   onTouchcancel() {
     this.prevFingerX = null
     this.prevFingerY = null
@@ -373,4 +442,16 @@ export class CanvasTool {
       shape.drawOnOffscreen(this.offscreenCtx)
     }
   }
+}
+
+export {
+  CanvasTool,
+  Point,
+  Image,
+  Circle,
+  Rect,
+  Text,
+  Line,
+  RoundRect,
+  Path
 }
