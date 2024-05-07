@@ -257,7 +257,7 @@ class CanvasTool {
    */
   setScale(x: number, y: number) {
     this.currentTransform[0] = x ?? this.dpr
-    this.currentTransform[4] = y ?? this.dpr
+    this.currentTransform[3] = y ?? this.dpr
   }
 
   /**
