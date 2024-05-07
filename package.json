@@ -1,8 +1,8 @@
 {
-  "name": "wx_canvas_tool",
+  "name": "wx-canvas-tool",
   "version": "1.0.0",
   "description": "only for wechat miniprogram",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,7 +11,7 @@
     "url": "https://github.com/zjwmiao/wx-canvas-tool.git"
   },
   "author": "zjw",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "gl-matrix": "^3.4.3",
     "miniprogram-api-typings": "^3.12.2"
