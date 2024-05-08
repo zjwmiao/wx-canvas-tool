@@ -24,7 +24,7 @@ export abstract class Shape {
   fill: boolean
   style: any
   hash: string
-  onClick: () => void
+  onTap: () => void
   draggable: boolean
   protected transformation = mat2d.create()
 
@@ -36,7 +36,7 @@ export abstract class Shape {
     this.fill = config.fill
     this.style = config.style
     this.hash = null
-    this.onClick = config.onClick
+    this.onTap = config.onClick
     this.draggable = config.draggable
     if (config.rotation) mat2d.rotate(this.transformation, this.transformation, config.rotation * DEG)
     if (config.translation) {

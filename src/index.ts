@@ -37,6 +37,12 @@ function invert(transform: WechatMiniprogram.CanvasRenderingContext.DOMMatrixRea
   ]
 }
 
+/**
+ * 用SelectorQuery获取节点信息
+ * @param pageInstance 页面实例
+ * @param id canvas id
+ * @returns 节点信息
+ */
 function getNodeInfo(pageInstance: any, id: string): Promise<any> {
   return new Promise((resolve, reject) => {
     try {
@@ -164,6 +170,11 @@ class CanvasTool {
     }).catch(e => {
       console.log('init failed', e)
     })
+  }
+
+  async getBoudingClientRect() {
+    const { left, top, right, bottom, width, height } = await getNodeInfo(this.pageInstance, this.id)
+    return { left, top, right, bottom, width, height }
   }
 
   /**
@@ -308,11 +319,11 @@ class CanvasTool {
     }
   }
 
-  onTouchmove(event: any) {
+  onTouchmove(event: WechatMiniprogram.TouchEvent) {
     const touches = event.touches
     if (touches.length === 1) {
-      const mX = touches[0].x
-      const mY = touches[0].y
+      const mX = touches[0].clientX
+      const mY = touches[0].clientY
       if (this.prevFingerX === null || this.prevFingerY === null) {
         this.prevFingerX = mX
         this.prevFingerY = mY
@@ -333,7 +344,7 @@ class CanvasTool {
       this.draggingAnimationId = this.animExecutorFunc(this.frame)
     } else if (touches.length === 2) {
       if (!this.zoomCenter) return
-      const diff = Math.abs(touches[0].x - touches[1].x) + Math.abs(touches[0].y - touches[1].y)
+      const diff = Math.abs(touches[0].clientX - touches[1].clientX) + Math.abs(touches[0].clientY - touches[1].clientY)
       if (!this.lastDiff) {
         this.lastDiff = diff
         return
@@ -365,16 +376,16 @@ class CanvasTool {
     )
   }
 
-  async onTouchstart(event: any) {
+  async onTouchstart(event: WechatMiniprogram.TouchEvent) {
     this.drawOffscreen()
     const touches = event.touches
     if (touches.length === 1) {
-      const shape = await this.getTouchPointShape(touches[0].x, touches[0].y)
+      const shape = await this.getTouchPointShape(touches[0].clientX, touches[0].clientY)
       if (shape && shape.draggable) {
         this.draggingShape = shape
       }
     } else if (touches.length === 2 && this.zoomable) {
-      this.zoomCenter = await this.getRealPosition((touches[0].x + touches[1].x) / 2, (touches[0].y + touches[1].y) / 2)
+      this.zoomCenter = await this.getPositionOnCanvasCoordinate((touches[0].clientX + touches[1].clientX) / 2, (touches[0].clientY + touches[1].clientY) / 2)
     }
   }
 
@@ -394,20 +405,21 @@ class CanvasTool {
     this.draggingShape = null
   }
 
-  async onTap(event: any) {
+  async onTap(event: WechatMiniprogram.TouchEvent) {
     this.drawOffscreen()
-    const shape = await this.getTouchPointShape(event.detail.x, event.detail.y)
-    if (shape && shape.onClick) shape.onClick()
+    const touch = event.touches[0]
+    const shape = await this.getTouchPointShape(touch.clientX, touch.clientY)
+    if (shape && shape.onTap) shape.onTap()
   }
 
   /**
-   * 用手指触摸的位置求出画布坐标系上的对应的坐标
-   * @param x touch的X坐标
-   * @param y touch的Y坐标
+   * 用页面上的位置坐标求出画布坐标系上的对应的坐标
+   * @param x X坐标
+   * @param y Y坐标
    * @returns 手指触摸的位置对应的画布坐标系上的坐标
    */
-  private async getRealPosition(x: number, y: number) {
-    const { left, top } = await getNodeInfo(this.pageInstance, this.id)
+  async getPositionOnCanvasCoordinate(x: number, y: number) {
+    const { left, top } = await this.getBoudingClientRect()
     x = (x - left) * this.dpr
     y = (y - top) * this.dpr
     const inverted = invert(this.ctx.getTransform())
@@ -424,10 +436,10 @@ class CanvasTool {
    * @returns 
    */
   private async getTouchPointShape(x: number, y: number) {
-    const { left, top } = await getNodeInfo(this.pageInstance, this.id)
-    const x_ = (x - left) * this.dpr
-    const y_ = (y - top) * this.dpr
-    const [r, g, b] = this.offscreenCtx.getImageData(x_, y_, 1, 1).data
+    const { left, top } = await this.getBoudingClientRect()
+    x = (x - left) * this.dpr
+    y = (y - top) * this.dpr
+    const [r, g, b] = this.offscreenCtx.getImageData(x, y, 1, 1).data
     const hash = `rgb(${r},${g},${b})`
     return this.shapeMap.get(hash)
   }
