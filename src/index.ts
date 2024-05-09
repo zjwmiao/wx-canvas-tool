@@ -1,12 +1,11 @@
-import { mat2d } from 'gl-matrix'
 import { Shape } from './shapes/Shape'
 import { Image } from './shapes/Image'
 import { Circle } from './shapes/Circle'
 import { Rect } from './shapes/Rect'
 import { Text } from './shapes/Text'
 import { Line } from './shapes/Line'
-import { RoundRect } from './shapes/RoundRect'
 import { Path } from './shapes/Path'
+import { Transformable } from './shapes/Transformable'
 
 type Point = {
   x: number
@@ -23,7 +22,7 @@ function *rgbGenerator() {
   }
 }
 
-function invert(transform: WechatMiniprogram.CanvasRenderingContext.DOMMatrixReadOnly) {
+function getInvertedMatrix(transform: WechatMiniprogram.CanvasRenderingContext.DOMMatrixReadOnly) {
   const { a, b, c, d, e, f } = transform
   const det = a * d - c * b
   if (det == 0) return
@@ -94,7 +93,7 @@ type GlobalConfig = {
   /**
    * 初始化完成后的回调函数
    */
-  afterInit?: (canvasTool: CanvasTool) => void
+  afterInit?: () => void
   /**
    * 可拖动
    */
@@ -105,7 +104,7 @@ type GlobalConfig = {
   zoomable?: boolean
 }
 
-class CanvasTool {
+class CanvasTool extends Transformable {
   initiated = false
   id: string
   draggable: boolean
@@ -118,7 +117,6 @@ class CanvasTool {
   private lastDiff: number = null
   private rgb: Generator
   private dpr: number
-  private currentTransform = mat2d.create()
   canvas: WechatMiniprogram.Canvas
   ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D/* RenderingContext */
   private shapes: Shape[] = []
@@ -128,8 +126,8 @@ class CanvasTool {
   private frame = () => {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0)
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const tr = this.currentTransform
-    this.ctx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
+    const mat = this.matrix
+    this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
     this.ctx.beginPath()
     for (const shape of this.shapes) {
       shape.drawFunc(this.ctx)
@@ -142,6 +140,7 @@ class CanvasTool {
   private imgsLoadPromises: Promise<any>[] = []
 
   constructor(config: GlobalConfig) {
+    super()
     this.pageInstance = config.pageInstance
     this.id = config.id
     this.rgb = rgbGenerator()
@@ -166,7 +165,7 @@ class CanvasTool {
       this.offscreenCtx = this.offscreen.getContext('2d')
       this.offscreenCtx.scale(dpr, dpr)
       this.initiated = true
-      if (config.afterInit) config.afterInit(this)
+      if (config.afterInit) config.afterInit()
     }).catch(e => {
       console.log('init failed', e)
     })
@@ -185,8 +184,8 @@ class CanvasTool {
     this.shapes.sort((a, b) => b.zIndex - a.zIndex)
     this.ctx.setTransform(1, 0, 0, 1, 0, 0)
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const tr = this.currentTransform
-    this.ctx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
+    const mat = this.matrix
+    this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
     this.ctx.beginPath()
     for (const shape of this.shapes) {
       shape.drawFunc(this.ctx)
@@ -219,72 +218,6 @@ class CanvasTool {
     this.shapes = []
     this.shapeMap.clear()
     this.rgb = rgbGenerator()
-  }
-
-  /**
-   * 整个画布的偏移，多次调用偏移量叠加，不传参数返回当前偏移量
-   * @param x 横轴偏移
-   * @param y 纵轴偏移
-   * @returns 当前偏移量
-   */
-  translate(x?: number, y?: number) {
-    if (arguments.length === 0) 
-      return {
-        x: this.currentTransform[4],
-        y: this.currentTransform[5]
-      }
-    mat2d.translate(this.currentTransform, this.currentTransform, [ x, y ])
-  }
-
-  /**
-   * 整个画布的偏移，直接设置偏移量
-   * @param x 横轴偏移
-   * @param y 纵轴偏移
-   */
-  setTranslation(x: number, y: number) {
-    this.currentTransform[4] = x
-    this.currentTransform[5] = y
-  }
-
-  /**
-   * 整个画布的缩放，多次调用会累乘缩放倍率，不传参数返回当前缩放倍率
-   * @param x 横轴缩放
-   * @param y 纵轴缩放
-   * @returns 当前缩放倍率
-   */
-  scale(x?: number, y?: number) {
-    if (arguments.length === 0) 
-      return {
-        x: this.currentTransform[0],
-        y: this.currentTransform[3]
-      }
-    mat2d.scale(this.currentTransform, this.currentTransform, [ x, y ])
-  }
-
-  /**
-   * 整个画布的缩放，直接设置缩放倍率
-   * @param x 横轴缩放
-   * @param y 纵轴缩放
-   */
-  setScale(x: number, y: number) {
-    this.currentTransform[0] = x ?? this.dpr
-    this.currentTransform[3] = y ?? this.dpr
-  }
-
-  /**
-   * 设置当前变换矩阵
-   * @param matrix 变换矩阵
-   */
-  setTransform(matrix: number[]) {
-    mat2d.copy(this.currentTransform, matrix as mat2d)
-  }
-
-  /**
-   * 重置画布变换
-   */
-  resetTransform() {
-    mat2d.identity(this.currentTransform)
-    mat2d.scale(this.currentTransform, this.currentTransform, [ this.dpr, this.dpr ])
   }
 
   /**
@@ -321,6 +254,7 @@ class CanvasTool {
 
   onTouchmove(event: WechatMiniprogram.TouchEvent) {
     const touches = event.touches
+    const mat = this.matrix
     if (touches.length === 1) {
       const mX = touches[0].clientX
       const mY = touches[0].clientY
@@ -332,11 +266,11 @@ class CanvasTool {
       const xOffset = (mX - this.prevFingerX) * this.dpr,
             yOffset = (mY - this.prevFingerY) * this.dpr
       if (this.draggingShape) {
-        this.draggingShape.x += xOffset / this.currentTransform[0]
-        this.draggingShape.y += yOffset / this.currentTransform[3]
+        this.draggingShape.x += xOffset / mat[0]
+        this.draggingShape.y += yOffset / mat[3]
       } else if (this.draggable) {
-        this.currentTransform[4] += xOffset
-        this.currentTransform[5] += yOffset
+        mat[4] += xOffset
+        mat[5] += yOffset
       }
       this.prevFingerX = mX
       this.prevFingerY = mY
@@ -350,10 +284,10 @@ class CanvasTool {
         return
       }
       const step = (diff / this.lastDiff - 1) * this.dpr
-      this.currentTransform[4] -= this.zoomCenter.x * step
-      this.currentTransform[5] -= this.zoomCenter.y * step
-      this.currentTransform[0] += step
-      this.currentTransform[3] += step
+      mat[4] -= this.zoomCenter.x * step
+      mat[5] -= this.zoomCenter.y * step
+      mat[0] += step
+      mat[3] += step
       this.lastDiff = diff
       if (this.draggingAnimationId) this.animStopFunc(this.draggingAnimationId)
       this.draggingAnimationId = this.animExecutorFunc(this.frame)
@@ -422,7 +356,7 @@ class CanvasTool {
     const { left, top } = await this.getBoudingClientRect()
     x = (x - left) * this.dpr
     y = (y - top) * this.dpr
-    const inverted = invert(this.ctx.getTransform())
+    const inverted = getInvertedMatrix(this.ctx.getTransform())
     return {
       x: x * inverted[0] + y * inverted[3] + inverted[2],
       y: x * inverted[1] + y * inverted[4] + inverted[5]
@@ -447,7 +381,7 @@ class CanvasTool {
   private drawOffscreen() {
     this.offscreenCtx.setTransform(1, 0, 0, 1, 0, 0)
     this.offscreenCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const tr = this.currentTransform
+    const tr = this.matrix
     this.offscreenCtx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
     this.offscreenCtx.beginPath()
     for (const shape of this.shapes) {
@@ -464,6 +398,5 @@ export {
   Rect,
   Text,
   Line,
-  RoundRect,
   Path
 }
