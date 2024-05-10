@@ -358,5 +358,5 @@ const path = new Path({
     strokeStyle: 'black',
   },
   stroke: true,
-})
+}, tool.canvas /* 跟Image一样，需传Canvas实例 */);
 ```
