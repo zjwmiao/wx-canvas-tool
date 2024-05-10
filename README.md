@@ -331,6 +331,7 @@ const text = new Text({
   align: 'center', // 对齐方式，同CanvasRenderingContext2D的textAlign属性
   font: '20px Arial', // 字体
   color: 'green' // 颜色
+  strokeWidth: 2, // 描边线宽度
   maxWdith: 200, // 最大宽度
   overflow: '...', // 自定义超出maxWdith部分替换的字符
   fill: true, // 调用fillText绘制文本
