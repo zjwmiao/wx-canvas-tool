@@ -18,7 +18,7 @@
 
     - Text 文本
 
-    - ~~Path 路径（功能还太简单了，没有实用价值）~~
+    - Path 路径
 
     - ~~自定义图形~~
 
@@ -337,4 +337,26 @@ const text = new Text({
   fill: true, // 调用fillText绘制文本
   /* stroke: true, // 调用strokeText绘制文本 */
 });
+```
+
+## Path 路径
+
+目前暂不支持传入svg path
+
+```javascript
+import { Path } from 'wx-canvas-tool';
+
+const path = new Path({
+  x: 100,
+  y: 100,
+  pathFunc: path => {
+    path.moveTo(5, 70);
+    path.lineTo(140, 23);
+    // ...
+  },
+  style: {
+    strokeStyle: 'black',
+  },
+  stroke: true,
+})
 ```
