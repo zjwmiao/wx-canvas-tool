@@ -10,6 +10,8 @@ interface TextConfig extends ShapeConfig {
   maxWidth: number;
   overflow: string;
   font: string;
+  color: string;
+  strokeWidth: number;
 }
 
 export class Text extends Shape {
@@ -21,6 +23,8 @@ export class Text extends Shape {
   private _font: string
   private needCalc: boolean = true
   private displayText: string
+  strokeWidth: number;
+  color: string
   width: number
   height: number
   actualWidth: number
@@ -36,6 +40,8 @@ export class Text extends Shape {
     this._overflow = config.overflow ?? ''
     this._font = config.font
     this.displayText = config.text
+    this.color = config.color
+    this.strokeWidth = config.strokeWidth
   }
 
   set baseline(val: Baseline) {
@@ -134,9 +140,12 @@ export class Text extends Shape {
       this.needCalc = false
     }
     if (this.fill) {
+      if (this.color) ctx.fillStyle = this.color
       ctx.fillText(this.displayText, 0, 0)
     }
     if (this.stroke) {
+      if (this.color) ctx.strokeStyle = this.color
+      if (this.strokeWidth) ctx.lineWidth = this.strokeWidth
       ctx.strokeText(this.displayText, 0, 0)
     }
   }

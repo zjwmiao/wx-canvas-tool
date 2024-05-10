@@ -329,10 +329,8 @@ const text = new Text({
   text: 'Hello World',
   baseline: 'top', // 基线位置，同CanvasRenderingContext2D的textBaseline属性
   align: 'center', // 对齐方式，同CanvasRenderingContext2D的textAlign属性
-  style: {
-    font: '20px Arial',
-    fillStyle: 'black',
-  },
+  font: '20px Arial', // 字体
+  color: 'green' // 颜色
   maxWdith: 200, // 最大宽度
   overflow: '...', // 自定义超出maxWdith部分替换的字符
   fill: true, // 调用fillText绘制文本
