@@ -7,7 +7,7 @@ export interface ShapeConfig {
   stroke?: boolean;
   fill?: boolean;
   style?: any;
-  onClick?: () => void;
+  onTap?: () => void;
   draggable?: boolean;
   rotation?: number;
   translation?: { x: number, y: number };
@@ -34,7 +34,7 @@ export abstract class Shape extends Transformable {
     this.fill = config.fill
     this.style = config.style
     this.hash = null
-    this.onTap = config.onClick
+    this.onTap = config.onTap
     this.draggable = config.draggable
     if (config.rotation) this.rotate(config.rotation)
     if (config.translation) this.translate(config.translation.x, config.translation.y)
