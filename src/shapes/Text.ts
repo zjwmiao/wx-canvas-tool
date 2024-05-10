@@ -1,8 +1,9 @@
 import { Rect, RectConfig } from "./Rect"
+import { Shape, ShapeConfig } from "./Shape";
 
 type Baseline = "top" | "hanging" | "middle" | "alphabetic" | "ideographic" | "bottom"
 type Align = "left" | "right" | "center" | "start" | "end"
-interface TextConfig extends RectConfig {
+interface TextConfig extends ShapeConfig {
   text: string;
   baseline: Baseline;
   align: Align;
@@ -11,7 +12,7 @@ interface TextConfig extends RectConfig {
   font: string;
 }
 
-export class Text extends Rect {
+export class Text extends Shape {
   private _text: string
   private _baseline: Baseline
   private _align: Align
@@ -20,6 +21,8 @@ export class Text extends Rect {
   private _font: string
   private needCalc: boolean = true
   private displayText: string
+  width: number
+  height: number
   actualWidth: number
   left: number
   top: number
