@@ -1,3 +1,4 @@
+import { mat2d, vec2 } from "gl-matrix";
 import { Transformable } from "./Transformable"
 
 export interface ShapeConfig {
@@ -24,6 +25,8 @@ export abstract class Shape extends Transformable {
   hash: string
   onTap: () => void
   draggable: boolean
+  protected calcTransformNeeded: boolean = false
+  private innerTransform: mat2d = mat2d.create()
 
   constructor(config: ShapeConfig) {
     super()
@@ -33,7 +36,6 @@ export abstract class Shape extends Transformable {
     this.stroke = config.stroke
     this.fill = config.fill
     this.style = config.style
-    this.hash = null
     this.onTap = config.onTap
     this.draggable = config.draggable
     if (config.rotation) this.rotate(config.rotation)
@@ -44,13 +46,14 @@ export abstract class Shape extends Transformable {
 
   drawHit(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     this.draw(ctx)
+    ctx.fill()
   }
 
-  drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
+  drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
     ctx.save()
-    ctx.translate(this.x, this.y)
-    const mat = this.matrix
-    ctx.transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
+    mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
+    if (this.calcTransformNeeded) mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
+    this.applyCurrentTransform(ctx)
     if (this.style) Object.assign(ctx, this.style)
     ctx.beginPath()
     this.draw(ctx)
@@ -59,17 +62,46 @@ export abstract class Shape extends Transformable {
     ctx.restore()
   }
 
-  drawOnOffscreen(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
+  drawOnOffscreen(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
     ctx.save()
-    ctx.translate(this.x, this.y)
-    const mat = this.matrix
-    ctx.transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
+    mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
+    if (this.calcTransformNeeded) mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
+    this.applyCurrentTransform(ctx)
     ctx.fillStyle = this.hash
     ctx.strokeStyle = this.hash
     ctx.beginPath()
     this.drawHit(ctx)
-    if (this.fill) ctx.fill()
-    if (this.stroke) ctx.stroke()
     ctx.restore()
+  }
+  
+  applyCurrentTransform(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
+    const tr = this.innerTransform
+    ctx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
+    this.calcTransformNeeded = false
+  }
+
+  translate(x: number, y: number) {
+    this.calcTransformNeeded = true
+    super.translate(x, y)
+  }
+
+  rotate(angle: number) {
+    this.calcTransformNeeded = true
+    super.rotate(angle)
+  }
+
+  scale(sx: number, sy: number) {
+    this.calcTransformNeeded = true
+    super.scale(sx, sy)
+  }
+
+  setTransform(a: number, b: number, c: number, d: number, e: number, f: number) {
+    this.calcTransformNeeded = true
+    super.setTransform(a, b, c, d, e, f)
+  }
+
+  resetTransform(): void {
+    this.calcTransformNeeded = true
+    super.resetTransform()
   }
 }

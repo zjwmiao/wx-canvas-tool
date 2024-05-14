@@ -6,6 +6,10 @@ import { Text } from './shapes/Text'
 import { Line } from './shapes/Line'
 import { Path } from './shapes/Path'
 import { Transformable } from './shapes/Transformable'
+import { mat2d } from 'gl-matrix'
+import { Ellipse } from './shapes/Ellipse'
+import { CustomShape } from './shapes/Custom'
+import { ArrowLine } from './shapes/ArrowLine'
 
 type Point = {
   x: number
@@ -22,6 +26,9 @@ function *rgbGenerator() {
   }
 }
 
+/**
+ * @deprecated
+ */
 function getInvertedMatrix(transform: WechatMiniprogram.CanvasRenderingContext.DOMMatrixReadOnly) {
   const { a, b, c, d, e, f } = transform
   const det = a * d - c * b
@@ -109,6 +116,11 @@ class CanvasTool extends Transformable {
   id: string
   draggable: boolean
   zoomable: boolean
+  width: number
+  height: number
+  canvas: WechatMiniprogram.Canvas
+  ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D/* RenderingContext */
+  shapes: Shape[] = []
   private pageInstance: any
   private prevFingerX: number = null
   private prevFingerY: number = null
@@ -117,9 +129,6 @@ class CanvasTool extends Transformable {
   private lastDiff: number = null
   private rgb: Generator
   private dpr: number
-  canvas: WechatMiniprogram.Canvas
-  ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D/* RenderingContext */
-  private shapes: Shape[] = []
   private draggingShape: Shape
   private animExecutorFunc: (callback: (...args: any[]) => any) => number
   private animStopFunc: (id: number) => void
@@ -130,7 +139,7 @@ class CanvasTool extends Transformable {
     this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
     this.ctx.beginPath()
     for (const shape of this.shapes) {
-      shape.drawFunc(this.ctx)
+      shape.drawFunc(this.ctx, mat)
     }
     this.draggingAnimationId = null
   }
@@ -155,6 +164,8 @@ class CanvasTool extends Transformable {
       const dpr = wx.getWindowInfo().pixelRatio
       this.canvas.width = width * dpr
       this.canvas.height = height * dpr
+      this.width = width
+      this.height = height
       this.dpr = dpr
       this.scale(dpr, dpr)
       this.offscreen = wx.createOffscreenCanvas({
@@ -188,7 +199,7 @@ class CanvasTool extends Transformable {
     this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
     this.ctx.beginPath()
     for (const shape of this.shapes) {
-      shape.drawFunc(this.ctx)
+      shape.drawFunc(this.ctx, mat)
     }
   }
 
@@ -218,6 +229,10 @@ class CanvasTool extends Transformable {
     this.shapes = []
     this.shapeMap.clear()
     this.rgb = rgbGenerator()
+  }
+
+  resetTransform(): void {
+    mat2d.fromScaling(this.matrix, [this.dpr, this.dpr])
   }
 
   /**
@@ -356,10 +371,10 @@ class CanvasTool extends Transformable {
     const { left, top } = await this.getBoudingClientRect()
     x = (x - left) * this.dpr
     y = (y - top) * this.dpr
-    const inverted = getInvertedMatrix(this.ctx.getTransform())
+    const inverted = mat2d.invert(mat2d.create(), this.matrix)
     return {
-      x: x * inverted[0] + y * inverted[3] + inverted[2],
-      y: x * inverted[1] + y * inverted[4] + inverted[5]
+      x: x * inverted[0] + y * inverted[2] + inverted[4],
+      y: x * inverted[1] + y * inverted[3] + inverted[5]
     }
   }
 
@@ -385,7 +400,7 @@ class CanvasTool extends Transformable {
     this.offscreenCtx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
     this.offscreenCtx.beginPath()
     for (const shape of this.shapes) {
-      shape.drawOnOffscreen(this.offscreenCtx)
+      shape.drawOnOffscreen(this.offscreenCtx, tr)
     }
   }
 }
@@ -398,5 +413,8 @@ export {
   Rect,
   Text,
   Line,
-  Path
+  Path,
+  Ellipse,
+  CustomShape,
+  ArrowLine,
 }

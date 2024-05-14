@@ -2,6 +2,10 @@ import { Rect, RectConfig } from "./Rect"
 
 interface ImgConfig extends RectConfig {
   src: string
+  sourceX: number
+  sourceY: number
+  sourceHeight: number
+  sourceWidth: number
 }
 
 export class Image extends Rect {
