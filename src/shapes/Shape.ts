@@ -25,7 +25,6 @@ export abstract class Shape extends Transformable {
   hash: string
   onTap: () => void
   draggable: boolean
-  protected calcTransformNeeded: boolean = false
   private innerTransform: mat2d = mat2d.create()
 
   constructor(config: ShapeConfig) {
@@ -52,7 +51,7 @@ export abstract class Shape extends Transformable {
   drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
     ctx.save()
     mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
-    if (this.calcTransformNeeded) mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
+    mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
     this.applyCurrentTransform(ctx)
     if (this.style) Object.assign(ctx, this.style)
     ctx.beginPath()
@@ -65,7 +64,7 @@ export abstract class Shape extends Transformable {
   drawOnOffscreen(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
     ctx.save()
     mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
-    if (this.calcTransformNeeded) mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
+    mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
     this.applyCurrentTransform(ctx)
     ctx.fillStyle = this.hash
     ctx.strokeStyle = this.hash
@@ -77,31 +76,5 @@ export abstract class Shape extends Transformable {
   applyCurrentTransform(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
     const tr = this.innerTransform
     ctx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
-    this.calcTransformNeeded = false
-  }
-
-  translate(x: number, y: number) {
-    this.calcTransformNeeded = true
-    super.translate(x, y)
-  }
-
-  rotate(angle: number) {
-    this.calcTransformNeeded = true
-    super.rotate(angle)
-  }
-
-  scale(sx: number, sy: number) {
-    this.calcTransformNeeded = true
-    super.scale(sx, sy)
-  }
-
-  setTransform(a: number, b: number, c: number, d: number, e: number, f: number) {
-    this.calcTransformNeeded = true
-    super.setTransform(a, b, c, d, e, f)
-  }
-
-  resetTransform(): void {
-    this.calcTransformNeeded = true
-    super.resetTransform()
   }
 }

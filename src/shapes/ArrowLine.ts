@@ -21,9 +21,9 @@ export class ArrowLine extends Line {
     this.endX = points[len - 2]
     this.endY = points[len - 1]
     this.endRotateAngle = Math.atan2(points[len - 1] - points[len - 3], points[len - 2] - points[len - 4])
-    this._arrowWidth = 10
-    this._arrowHeight = 20
-    this.halfArrowWidth = this._arrowHeight / 2
+    this._arrowWidth = config.arrowWidth ?? 10
+    this._arrowHeight = config.arrowHeight ?? 20
+    this.halfArrowWidth = this._arrowWidth / 2
   }
 
   draw(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
