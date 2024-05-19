@@ -289,11 +289,11 @@ const arr = new ArrowLine({
     80, 80
   ],
   tail: true, // 是否在线段末端处绘制箭头，默认true
-  arrowHeight: 30, // 线段末端箭头等腰三角形高
-  arrowWidth: 10, // 线段末端箭头等腰三角形宽
+  arrowHeight: 30, // 线段末端箭头等腰三角形高，默认20
+  arrowWidth: 10, // 线段末端箭头等腰三角形宽，默认10
   head: true, // 是否在线段开始处绘制箭头
-  headArrowWidth: 30, 10 // 线段开始处箭头等腰三角形宽，仅head为true时生效
-  headArrowHeight: 30, 10 // 线段开始处箭头等腰三角形高，仅head为true时生效
+  headArrowWidth: 10 // 线段开始处箭头等腰三角形宽，默认20，仅head为true时生效
+  headArrowHeight: 30 // 线段开始处箭头等腰三角形高，默认10，仅head为true时生效
   color: 'red',
 })
 ```
