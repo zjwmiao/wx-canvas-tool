@@ -1,22 +1,50 @@
-import { mat2d, vec2 } from "gl-matrix";
 import { Transformable } from "./Transformable"
+import { Matrix } from "../Matrix";
 
 export interface ShapeConfig {
-  zIndex?: number;
+  // zIndex?: number;
+  /**
+   * 图形绘制原点的x坐标
+   */
   x?: number;
+  /**
+   * 图形绘制原点的y坐标
+   */
   y?: number;
+  /**
+   * 调用CanvasRenderingContext2D的stroke方法绘制图形的边框
+   */
   stroke?: boolean;
+  /**
+   * 调用CanvasRenderingContext2D的fill方法填充图形的内部
+   */
   fill?: boolean;
+  /**
+   * 设置绘制该图形的CanvasRenderingContext2D样式
+   */
   style?: any;
   onTap?: () => void;
+  /**
+   * 开启拖拽
+   */
   draggable?: boolean;
+  /**
+   * 图形旋转角度，以角度为单位
+   */
   rotation?: number;
+  /**
+   * 图形平移距离
+   */
   translation?: { x: number, y: number };
+  /**
+   * 图形缩放比例
+   */
+  scale?: { x: number, y: number };
   [key: string]: any;
 }
 
 export abstract class Shape extends Transformable {
-  zIndex: number
+  // zIndex: number
   x: number
   y: number
   stroke: boolean
@@ -25,13 +53,13 @@ export abstract class Shape extends Transformable {
   hash: string
   onTap: () => void
   draggable: boolean
-  private innerTransform: mat2d = mat2d.create()
+  private innerTransform: Matrix = new Matrix()
 
   constructor(config: ShapeConfig) {
     super()
-    this.zIndex = config.zIndex ?? 0
-    this.x = config.x
-    this.y = config.y
+    // this.zIndex = config.zIndex ?? 0
+    this.x = config.x ?? 0
+    this.y = config.y ?? 0
     this.stroke = config.stroke
     this.fill = config.fill
     this.style = config.style
@@ -39,6 +67,7 @@ export abstract class Shape extends Transformable {
     this.draggable = config.draggable
     if (config.rotation) this.rotate(config.rotation)
     if (config.translation) this.translate(config.translation.x, config.translation.y)
+    if (config.scale) this.scale(config.scale.x, config.scale.y)
   }
 
   abstract draw(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D): void
@@ -48,11 +77,15 @@ export abstract class Shape extends Transformable {
     ctx.fill()
   }
 
-  drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
+  /**
+   * 由外部调用，绘制图形
+   * @param ctx CanvasRenderingContext2D
+   * @param globalTransform 画布的全局变换矩阵
+   */
+  drawFunc(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: Matrix) {
     ctx.save()
-    mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
-    mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
-    this.applyCurrentTransform(ctx)
+    Matrix.translate(this.innerTransform, globalTransform, this.x, this.y)
+    this.innerTransform.multiply(this.matrix).setToCtx(ctx)
     if (this.style) Object.assign(ctx, this.style)
     ctx.beginPath()
     this.draw(ctx)
@@ -61,20 +94,19 @@ export abstract class Shape extends Transformable {
     ctx.restore()
   }
 
-  drawOnOffscreen(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: mat2d) {
+  /**
+   * 由外部调用，绘制图形的hit区域
+   * @param ctx CanvasRenderingContext2D
+   * @param globalTransform 画布的全局变换矩阵
+   */
+  drawOnOffscreen(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D, globalTransform: Matrix) {
     ctx.save()
-    mat2d.translate(this.innerTransform, globalTransform, vec2.set(this.vec2, this.x, this.y))
-    mat2d.multiply(this.innerTransform, this.innerTransform, this.matrix)
-    this.applyCurrentTransform(ctx)
+    Matrix.translate(this.innerTransform, globalTransform, this.x, this.y)
+    this.innerTransform.multiply(this.matrix).setToCtx(ctx)
     ctx.fillStyle = this.hash
     ctx.strokeStyle = this.hash
     ctx.beginPath()
     this.drawHit(ctx)
     ctx.restore()
-  }
-  
-  applyCurrentTransform(ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) {
-    const tr = this.innerTransform
-    ctx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
   }
 }

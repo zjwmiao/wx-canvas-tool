@@ -5,12 +5,19 @@ type Baseline = "top" | "hanging" | "middle" | "alphabetic" | "ideographic" | "b
 type Align = "left" | "right" | "center" | "start" | "end"
 interface TextConfig extends ShapeConfig {
   text: string;
+  /** 基线 */
   baseline: Baseline;
+  /** 对齐 */
   align: Align;
+  /** 最大宽度 */
   maxWidth: number;
+  /** 超出最大宽度后替换的字符 */
   overflow: string;
+  /** 字体 */
   font: string;
+  /** 颜色 */
   color: string;
+  /** 描边宽度 */
   strokeWidth: number;
 }
 

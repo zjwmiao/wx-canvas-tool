@@ -27,23 +27,6 @@ function *rgbGenerator() {
 }
 
 /**
- * @deprecated
- */
-function getInvertedMatrix(transform: WechatMiniprogram.CanvasRenderingContext.DOMMatrixReadOnly) {
-  const { a, b, c, d, e, f } = transform
-  const det = a * d - c * b
-  if (det == 0) return
-  return [
-    d / det,
-    - c / det,
-    (c * f - d * e) / det,
-    - b / det,
-    a / det,
-    (e * b - a * f) / det
-  ]
-}
-
-/**
  * 用SelectorQuery获取节点信息
  * @param pageInstance 页面实例
  * @param id canvas id
@@ -109,6 +92,7 @@ type GlobalConfig = {
    * 可缩放
    */
   zoomable?: boolean
+  globalStyles?: { [key: string]: string }
 }
 
 class CanvasTool extends Transformable {
@@ -133,14 +117,7 @@ class CanvasTool extends Transformable {
   private animExecutorFunc: (callback: (...args: any[]) => any) => number
   private animStopFunc: (id: number) => void
   private frame = () => {
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const mat = this.matrix
-    this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
-    this.ctx.beginPath()
-    for (const shape of this.shapes) {
-      shape.drawFunc(this.ctx, mat)
-    }
+    this.update()
     this.draggingAnimationId = null
   }
   private offscreen: WechatMiniprogram.OffscreenCanvas
@@ -161,6 +138,7 @@ class CanvasTool extends Transformable {
       this.animExecutorFunc = this.canvas.requestAnimationFrame.bind(this.canvas)
       this.animStopFunc = this.canvas.cancelAnimationFrame.bind(this.canvas)
       this.ctx = this.canvas.getContext('2d')
+      if (config.globalStyles) Object.assign(this.ctx, config.globalStyles)
       const dpr = wx.getWindowInfo().pixelRatio
       this.canvas.width = width * dpr
       this.canvas.height = height * dpr
@@ -188,29 +166,28 @@ class CanvasTool extends Transformable {
   }
 
   /**
-   * 清除画布并绘制
+   * 清除画布并绘制所有图形
    */
-  async draw() {
-    await this.waitForImagesLoad()
-    this.shapes.sort((a, b) => b.zIndex - a.zIndex)
+  update() {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0)
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const mat = this.matrix
-    this.ctx.setTransform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
+    this.matrix.setToCtx(this.ctx)
     this.ctx.beginPath()
     for (const shape of this.shapes) {
-      shape.drawFunc(this.ctx, mat)
+      shape.drawFunc(this.ctx, this.matrix)
     }
   }
 
   /**
-   * 等待所有图片加载完成
+   * 绘制所有图形，会先清空画布，与update()的区别是会等待所有图片加载完成
    */
-  async waitForImagesLoad() {
+  async draw() {
     if (this.imgsLoadPromises.length) {
       await Promise.all(this.imgsLoadPromises)
       this.imgsLoadPromises = []
     }
+    // this.shapes.sort((a, b) => b.zIndex - a.zIndex)
+    this.update()
   }
 
   addShape(shape: Shape) {
@@ -223,7 +200,7 @@ class CanvasTool extends Transformable {
   }
 
   /**
-   * 清除所有形状，这个方法不会清空画布
+   * 清空内部图形实例队列，这个方法不会清空画布
    */
   clearShapes() {
     this.shapes = []
@@ -232,7 +209,7 @@ class CanvasTool extends Transformable {
   }
 
   resetTransform(): void {
-    mat2d.fromScaling(this.matrix, [this.dpr, this.dpr])
+    this.matrix.reset().scale(this.dpr, this.dpr)
   }
 
   /**
@@ -269,7 +246,6 @@ class CanvasTool extends Transformable {
 
   onTouchmove(event: WechatMiniprogram.TouchEvent) {
     const touches = event.touches
-    const mat = this.matrix
     if (touches.length === 1) {
       const mX = touches[0].clientX
       const mY = touches[0].clientY
@@ -278,14 +254,13 @@ class CanvasTool extends Transformable {
         this.prevFingerY = mY
         return
       }
-      const xOffset = (mX - this.prevFingerX) * this.dpr,
-            yOffset = (mY - this.prevFingerY) * this.dpr
+      const xOffset = (mX - this.prevFingerX) * this.dpr / this.getScaleX(),
+            yOffset = (mY - this.prevFingerY) * this.dpr / this.getScaleY()
       if (this.draggingShape) {
-        this.draggingShape.x += xOffset / mat[0]
-        this.draggingShape.y += yOffset / mat[3]
+        this.draggingShape.x += xOffset
+        this.draggingShape.y += yOffset
       } else if (this.draggable) {
-        mat[4] += xOffset
-        mat[5] += yOffset
+        this.translate(xOffset, yOffset)
       }
       this.prevFingerX = mX
       this.prevFingerY = mY
@@ -298,11 +273,8 @@ class CanvasTool extends Transformable {
         this.lastDiff = diff
         return
       }
-      const step = (diff / this.lastDiff - 1) * this.dpr
-      mat[4] -= this.zoomCenter.x * step
-      mat[5] -= this.zoomCenter.y * step
-      mat[0] += step
-      mat[3] += step
+      const step = diff / this.lastDiff
+      this.scaleAt(step, step, this.zoomCenter.x, this.zoomCenter.y)
       this.lastDiff = diff
       if (this.draggingAnimationId) this.animStopFunc(this.draggingAnimationId)
       this.draggingAnimationId = this.animExecutorFunc(this.frame)
@@ -318,7 +290,7 @@ class CanvasTool extends Transformable {
     return new Animation(
       () => {
         frame()
-        this.frame()
+        this.update()
       },
       this.animExecutorFunc,
       this.animStopFunc
@@ -371,10 +343,10 @@ class CanvasTool extends Transformable {
     const { left, top } = await this.getBoudingClientRect()
     x = (x - left) * this.dpr
     y = (y - top) * this.dpr
-    const inverted = mat2d.invert(mat2d.create(), this.matrix)
+    const inverted = this.matrix.invert()
     return {
-      x: x * inverted[0] + y * inverted[2] + inverted[4],
-      y: x * inverted[1] + y * inverted[3] + inverted[5]
+      x: x * inverted.a + y * inverted.c + inverted.e,
+      y: x * inverted.b + y * inverted.d + inverted.f
     }
   }
 
@@ -396,11 +368,10 @@ class CanvasTool extends Transformable {
   private drawOffscreen() {
     this.offscreenCtx.setTransform(1, 0, 0, 1, 0, 0)
     this.offscreenCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const tr = this.matrix
-    this.offscreenCtx.setTransform(tr[0], tr[1], tr[2], tr[3], tr[4], tr[5])
+    this.matrix.setToCtx(this.offscreenCtx)
     this.offscreenCtx.beginPath()
     for (const shape of this.shapes) {
-      shape.drawOnOffscreen(this.offscreenCtx, tr)
+      shape.drawOnOffscreen(this.offscreenCtx, this.matrix)
     }
   }
 }

@@ -5,6 +5,12 @@ export class CustomShape<C extends ShapeConfig> extends Shape {
   private _drawFunc: (ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) => void
   private _hitDetectFunc: (ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) => void
 
+  /**
+   * 
+   * @param config 图形属性配置
+   * @param drawFunc 绘制函数
+   * @param hitDetectFunc 绘制hit检测区域的函数，可不传，默认按drawFunc绘制hit检测区域
+   */
   constructor(
     config: C,
     drawFunc: (ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D) => void,

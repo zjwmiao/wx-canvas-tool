@@ -14,13 +14,15 @@
 
     - Line 线
 
+    - ArrowLine 箭头线
+
     - Image 图片
 
     - Text 文本
 
     - Path 路径
 
-    - ~~自定义图形~~
+    - 自定义图形
 
 - 手指拖拽移动画布、图形
 
@@ -105,8 +107,8 @@
       tool = new CanvasTool({
         id: 'canvas',
         pageInstance: this,
-        draggable: true,
-        zoomable: true,
+        draggable: true, // 开启拖拽
+        zoomable: true, // 开启缩放
         afterInit: () => this.canvasReady = true
       });
     },
@@ -268,14 +270,32 @@ const line = new Line({
     300, 20
     // ...
   ],
-  style: {
-    strokeStyle: 'black',
-    lineWidth: 2,
-  }
+  color: 'green' // 颜色
+  dash: [5, 5], // 虚线，会调用CanvasRenderingContext2D的setLineDash()
 });
 
 // 实例方法，追加点
 line.append([100, 100]);
+```
+
+## ArrowLine 带箭头的线
+
+```javascript
+import { ArrowLine } from 'wx-canvas-tool'
+
+const arr = new ArrowLine({
+  points: [
+    20, 20,
+    80, 80
+  ],
+  tail: true, // 是否在线段末端处绘制箭头，默认true
+  arrowHeight: 30, // 线段末端箭头等腰三角形高
+  arrowWidth: 10, // 线段末端箭头等腰三角形宽
+  head: true, // 是否在线段开始处绘制箭头
+  headArrowWidth: 30, 10 // 线段开始处箭头等腰三角形宽，仅head为true时生效
+  headArrowHeight: 30, 10 // 线段开始处箭头等腰三角形高，仅head为true时生效
+  color: 'red',
+})
 ```
 
 ## Image 图片
@@ -360,3 +380,92 @@ const path = new Path({
   stroke: true,
 }, tool.canvas /* 跟Image一样，需传Canvas实例 */);
 ```
+
+## 自定义图形
+
+```javascript
+import { CustomShape } from 'wx-canvas-tool'
+
+const custom = new CustomShape({
+  x: 60,
+  y: 60,
+  style: { fillStyle: 'green' },
+  fill: true,
+  onTap: () => console.log('??')
+}, ctx => {
+  /* 
+    绘制函数，如果不传最后一个该函数的话，则该函数内最好不要设置样式，
+    样式统一在构造函数第一个参数的style属性中设置，否则会影响点击检测
+
+    该绘制函数内的画布绘画原点及上面传入的x,y属性
+    因此，ctx.rect(0, 0, 80, 80)画出来的矩形实际上在画布中左上角的位置是(60, 60)
+  */
+  ctx.rect(0, 0, 80, 80)
+}, ctx => {
+  /* 
+    绘制点击检测图形，该函数可不传，默认点击检测区域就是按照上一个函数内定义的绘制命令而绘制
+    该函数内最好不要设置样式，否则会影响点击检测
+  */
+  // ...
+})
+```
+
+## 椭圆
+
+```javascript
+import { Ellipse } from 'wx-canvas-tool'
+
+const ellipse = new Ellipse({
+  x: 50,
+  y: 50,
+  radusX: 80, // x轴半径
+  radusY: 50, // y轴半径
+  style: { fillStyle: 'blue' },
+  fill: true,
+})
+```
+
+# 属性和方法
+
+## CanvasTool
+
+属性
+
+| 属性 | 类型 | 说明 | 默认值 |
+| --- | --- | --- | --- |
+| id | string | canvas的id | - |
+| pageInstance | object | 页面实例 | - |
+| draggable | boolean | 是否开启拖拽 | false |
+| zoomable | boolean | 是否开启拖拽 | false |
+| width | number | canvas宽度，只读属性，设置该属性无意义 | - |
+| height | number | canvas高度，只读属性，设置该属性无意义 | - |
+| shapes | array | 图形数组 | [] |
+| canvas | object | canvas实例，只读属性，设置该属性无意义 | - |
+| ctx | object | canvas的context实例，只读属性，设置该属性无意义 | - |
+
+方法
+
+| 方法 | 说明 |
+| --- | --- |
+| addShape | 添加图形 |
+| clear | 清除画布 |
+| draw | 清除画布并重新绘制所有图形，与update方法的区别是会等待所有图片加载完成 |
+| update | 清除画布并重新绘制所有图形 |
+| clearShapes | 清除图形数组 |
+| resetTransform | 重置画布变换 |
+| translate | 平移变换 |
+| scale | 缩放 |
+| scaleAt | 以指定点为中心缩放 |
+| rotate | 旋转变换 |
+| rotateAt | 以指定点为中心旋转 |
+| getTranslateX | 获取x轴平移值 |
+| getTranslateY | 获取y轴平移值 |
+| getScaleX | 获取x轴缩放 |
+| getScaleY | 获取y轴缩放 |
+| getRotation | 获取旋转角度 |
+| calcText | 计算文本高度宽度 |
+| onTouchstart | 手指按下时触发 |
+| onTouchmove | 手指移动时触发 |
+| onTouchend | 手指抬起时触发 |
+| onTouchcancel | 手指离开时触发 |
+| onTap | 点击时触发 |

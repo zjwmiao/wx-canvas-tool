@@ -1,58 +1,95 @@
-import { mat2d, vec2 } from "gl-matrix"
-
-const DEG = Math.PI / 180
+import { Matrix } from "../Matrix"
 
 export abstract class Transformable {
-  matrix: mat2d = mat2d.create()
-  protected vec2 = vec2.create()
+  matrix: Matrix = new Matrix()
 
+  /**
+   * @param x 水平方向平移
+   * @param y 垂直方向平移
+   */
   translate(x: number, y: number) {
-    mat2d.translate(this.matrix, this.matrix, vec2.set(this.vec2, x, y))
+    this.matrix.translate(x, y)
   }
 
+  /**
+   * 获取水平方向平移
+   * @returns number
+   */
   getTranslateX() {
-    return this.matrix[4]
+    return this.matrix.getTranslateX()
   }
 
+  /**
+   * 获取垂直方向平移
+   * @returns number
+   */
   getTranslateY() {
-    return this.matrix[5]
+    return this.matrix.getTranslateY()
   }
 
-  rotate(angle: number): void {
-    mat2d.rotate(this.matrix, this.matrix, angle * DEG)
+  /**
+   * 旋转
+   * @param degree 角度
+   */
+  rotate(degree: number): void {
+    this.matrix.rotateDegrees(degree)
   }
 
+  /**
+   * 围绕指定点旋转
+   * @param degree 角度
+   * @param pivotX 围绕点x坐标
+   * @param pivotY 围绕点y坐标
+   */
+  rotateAt(degree: number, pivotX: number, pivotY: number): void {
+    this.matrix.translate(pivotX, pivotY).rotateDegrees(degree).translate(-pivotX, -pivotY)
+  }
+
+  /**
+   * 获取当前旋转角度/弧度
+   * @param degree 为true时返回角度值，不传或为false时返回弧度值
+   * @returns number
+   */
   getRotation(degree = false) {
-    const a = this.matrix[0],
-          b = this.matrix[1],
-          c = this.matrix[2],
-          d = this.matrix[3]
-    if (a !== 0) {
-      return degree ? Math.atan2(- c, a) / DEG : Math.atan2(- c, a)
-    } else if (d !== 0) {
-      return degree ? Math.atan2(b, d) / DEG : Math.atan2(b, d)
-    }
+    return this.matrix.getRotation(degree)
   }
 
+  /**
+   * 叠加缩放
+   * @param x 水平缩放
+   * @param y 垂直缩放
+   */
   scale(x: number, y: number) {
-    mat2d.scale(this.matrix, this.matrix, vec2.set(this.vec2, x, y))
+    this.matrix.scale(x, y)
+  }
+
+  /**
+   * 围绕指定点缩放
+   * @param scaleX 水平缩放
+   * @param scaleY 垂直缩放
+   * @param pivotX 围绕点x坐标
+   * @param pivotY 围绕点y坐标
+   */
+  scaleAt(scaleX: number, scaleY: number, pivotX: number, pivotY: number) {
+    this.matrix.translate(pivotX, pivotY).scale(scaleX, scaleY).translate(-pivotX, -pivotY)
   }
 
   getScaleX() {
-    const a = this.matrix[0], c = this.matrix[2]
-    return Math.sign(a) * Math.sqrt(Math.pow(a, 2) + Math.pow(c, 2))
+    return this.matrix.getScaleX()
   }
 
   getScaleY() {
-    const b = this.matrix[1], d = this.matrix[3]
-    return Math.sign(d) * Math.sqrt(Math.pow(b, 2) + Math.pow(d, 2))
+    return this.matrix.getScaleY()
   }
 
   setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-    mat2d.set(this.matrix, a, b, c, d, e, f)
+    this.matrix.setTransform(a, b, c, d, e, f)
   }
 
+  /**
+   * 重置变换
+   */
   resetTransform(): void {
-    mat2d.identity(this.matrix)
+    this.matrix.reset()
   }
 }
