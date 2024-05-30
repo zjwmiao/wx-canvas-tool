@@ -2,7 +2,7 @@ import { Transformable } from "./Transformable"
 import { Matrix } from "../Matrix";
 
 export interface ShapeConfig {
-  // zIndex?: number;
+  zIndex?: number;
   /**
    * 图形绘制原点的x坐标
    */
@@ -44,7 +44,7 @@ export interface ShapeConfig {
 }
 
 export abstract class Shape extends Transformable {
-  // zIndex: number
+  zIndex: number
   x: number
   y: number
   stroke: boolean
@@ -57,7 +57,7 @@ export abstract class Shape extends Transformable {
 
   constructor(config: ShapeConfig) {
     super()
-    // this.zIndex = config.zIndex ?? 0
+    this.zIndex = config.zIndex ?? 0
     this.x = config.x ?? 0
     this.y = config.y ?? 0
     this.stroke = config.stroke

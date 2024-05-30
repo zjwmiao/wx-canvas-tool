@@ -6,7 +6,6 @@ import { Text } from './shapes/Text'
 import { Line } from './shapes/Line'
 import { Path } from './shapes/Path'
 import { Transformable } from './shapes/Transformable'
-import { mat2d } from 'gl-matrix'
 import { Ellipse } from './shapes/Ellipse'
 import { CustomShape } from './shapes/Custom'
 import { ArrowLine } from './shapes/ArrowLine'
@@ -186,7 +185,7 @@ class CanvasTool extends Transformable {
       await Promise.all(this.imgsLoadPromises)
       this.imgsLoadPromises = []
     }
-    // this.shapes.sort((a, b) => b.zIndex - a.zIndex)
+    this.shapes.sort((a, b) => b.zIndex - a.zIndex)
     this.update()
   }
 
