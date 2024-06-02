@@ -241,8 +241,8 @@ const rect = new Rect({
 import { Circle } from 'wx-canvas-tool';
 
 const circle = new Circle({
-  x: 100,
-  y: 100,
+  x: 100, // 圆心x
+  y: 100, // 圆心y
   radius: 50, // 半径
   style: {
     fillStyle: 'blue',
@@ -361,7 +361,23 @@ const text = new Text({
 
 ## Path 路径
 
-目前暂不支持传入svg path
+~~目前暂不~~支持传入svg path
+
+传入svg path字符串：
+
+```javascript
+import { Path } from 'wx-canvas-tool';
+
+const path = new Path({
+  x: 100,
+  y: 100,
+  path: 'M 5 70 L 140 23 L 250 60 L 300 20', // svg path字符串
+  style: { strokeStyle: 'black' },
+  stroke: true,
+}, tool.canvas /* 跟Image一样，需传Canvas实例 */);
+```
+
+使用回调函数自定义路径：
 
 ```javascript
 import { Path } from 'wx-canvas-tool';

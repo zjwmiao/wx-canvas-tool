@@ -318,11 +318,7 @@ class CanvasTool extends Transformable {
   }
 
   onTouchcancel() {
-    this.prevFingerX = null
-    this.prevFingerY = null
-    this.lastDiff = null
-    this.zoomCenter = null
-    this.draggingShape = null
+    this.onTouchend()
   }
 
   async onTap(event: WechatMiniprogram.TouchEvent) {
