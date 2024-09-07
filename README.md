@@ -134,6 +134,8 @@ Page({
 
 ## 开启拖拽/缩放
 
+> tip: 如果出现拖拽卡顿，微信小程序原生开发建议用catch:touchmove来绑定touchomve事件，uniapp用@touchomve.native.stop
+
 ### uniapp
 
 ```html
