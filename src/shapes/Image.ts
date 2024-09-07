@@ -60,11 +60,11 @@ export class Image extends Rect {
     if (!this.loaded || this.failed) {
       return
     }
-    if (this.sourceX && this.sourceY && this.sourceHeight && this.sourceWidth && this.width && this.height) {
-      ctx.drawImage(this.img, this.sourceX, this.sourceY, this.sourceHeight, this.sourceWidth, 0, 0, this.width, this.height)
-      return
-    }
     if (this.width && this.height) {
+      if (this.sourceX && this.sourceY && this.sourceHeight && this.sourceWidth) {
+        ctx.drawImage(this.img, this.sourceX, this.sourceY, this.sourceHeight, this.sourceWidth, 0, 0, this.width, this.height)
+        return
+      }
       ctx.drawImage(this.img, 0, 0, this.width, this.height)
       return
     }

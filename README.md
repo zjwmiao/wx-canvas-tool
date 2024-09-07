@@ -32,16 +32,18 @@
 
 - 画布及图形均支持旋转（scale）、平移（translate）、缩放（scale）变换
 
-## 示例(uniapp写法)
+# 示例
 
-### 基本使用
+## 基本使用
+
+### uniapp
 
 ```html
 <canvas id="canvas" type="2d" style="width: 100%; height: 100%"></canvas>
 
 <script>
   import { CanvasTool, Rect } from 'wx-canvas-tool';
-  let tool;
+  let canvasTool;
 
   export default {
     data() {
@@ -50,7 +52,7 @@
       }
     },
     onReady() {
-      tool = new CanvasTool({
+      canvasTool = new CanvasTool({
         id: 'canvas', // canvas的id
         pageInstance: this, // 页面实例
         afterInit: () => this.canvasReady = true // 初始化成功回调
@@ -59,11 +61,12 @@
     watch: {
       canvasReady(val) {
         if (val) {
-          tool.addShape(new Rect({
+          // addShape将图形添加到画布
+          canvasTool.addShape(new Rect({
             x: 100,
             y: 100,
-            width: 100,
-            height: 100,
+            width: 50,
+            height: 50,
             style: {
               fillStyle: 'blue',
               strokeStyle: 'black',
@@ -72,7 +75,7 @@
             stroke: true,
           }));
           // 首次需调用draw才会实际绘制所有图形，此外draw方法也可以清除画布再重新绘制所有图形
-          tool.draw();
+          canvasTool.draw();
         }
       }
     }
@@ -80,7 +83,58 @@
 </script>
 ```
 
+### 微信小程序原生
+
+wxml:
+
+```html
+<canvas
+  id="canvas"
+  type="2d"
+  style="width: 100vw; height: 100vh;"
+></canvas>
+```
+
+js:
+
+```javascript
+const { CanvasTool, Rect } = require('wx-canvas-tool');
+Page({
+  data: {
+    canvasTool: null,
+  },
+  onReady() {
+    this.setData({
+      canvasTool: new CanvasTool({
+        id: 'canvas',
+        pageInstance: this,
+        draggable: true,
+        afterInit: () => this.onCanvasInit()
+      })
+    });
+  },
+  onCanvasInit() {
+    // addShape将图形添加到画布
+    this.data.canvasTool.addShape(new Rect({
+      x: 100,
+      y: 100,
+      height: 50,
+      width: 50,
+      style: {
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      },
+      fill: true,
+      stroke: true,
+    }));
+    this.data.canvasTool.draw();
+  }
+});
+```
+
 ## 开启拖拽/缩放
+
+### uniapp
 
 ```html
 <canvas 
@@ -150,7 +204,73 @@
 </script>
 ```
 
-# 图形点击事件
+### 微信小程序原生
+
+wxml:
+
+```html
+<canvas
+  id="canvas"
+  type="2d"
+  bind:touchstart="onTouchstart"
+  bind:touchmove="onTouchmove"
+  bind:touchcancel="onTouchcancel"
+  bind:touchend="onTouchend"
+  style="width: 100vw; height: 100vh;"
+></canvas>
+```
+
+js:
+
+```javascript
+const { CanvasTool, Rect } = require('wx-canvas-tool');
+Page({
+  data: {
+    canvasTool: null,
+  },
+  onReady() {
+    this.setData({
+      canvasTool: new CanvasTool({
+        id: 'canvas',
+        pageInstance: this,
+        draggable: true,
+        afterInit: () => this.onCanvasInit()
+      })
+    });
+  },
+  onCanvasInit() {
+    this.data.canvasTool.addShape(new Rect({
+      x: 100,
+      y: 100,
+      height: 50,
+      width: 50,
+      style: {
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      },
+      fill: true,
+      stroke: true,
+    }));
+    this.data.canvasTool.draw();
+  },
+  onTouchstart(e) {
+    this.data.canvasTool.onTouchstart(e);
+  },
+  onTouchmove(e) {
+    this.data.canvasTool.onTouchmove(e);
+  },
+  onTouchcancel(e) {
+    this.data.canvasTool.onTouchend(e);
+  },
+  onTouchend(e) {
+    this.data.canvasTool.onTouchend(e);
+  },
+});
+```
+
+## 图形点击事件
+
+### uniapp
 
 ```html
 <canvas 
@@ -208,7 +328,58 @@
 </script>
 ```
 
-# 图形
+### 微信小程序原生
+
+```htm
+<canvas
+  id="canvas"
+  type="2d"
+  bind:tap="onTap"
+  style="width: 100vw; height: 100vh;"
+></canvas>
+```
+
+js
+
+```javascript
+const { CanvasTool, Rect } = require('wx-canvas-tool');
+Page({
+  data: {
+    canvasTool: null,
+  },
+  onReady() {
+    this.setData({
+      canvasTool: new CanvasTool({
+        id: 'canvas',
+        pageInstance: this,
+        draggable: true,
+        afterInit: () => this.onCanvasInit()
+      })
+    });
+  },
+  onCanvasInit() {
+    this.data.canvasTool.addShape(new Rect({
+      x: 100,
+      y: 100,
+      height: 50,
+      width: 50,
+      style: {
+        fillStyle: 'blue',
+        strokeStyle: 'black',
+      },
+      fill: true,
+      stroke: true,
+      onTap: () => console.log('rect clicked')
+    }));
+    this.data.canvasTool.draw();
+  },
+  onTap(e) {
+    this.data.canvasTool.onTap(e);
+  },
+});
+```
+
+# 内置图形
 
 ## Rect 矩形
 
@@ -270,7 +441,7 @@ const line = new Line({
     300, 20
     // ...
   ],
-  color: 'green' // 颜色
+  color: 'green', // 颜色
   dash: [5, 5], // 虚线，会调用CanvasRenderingContext2D的setLineDash()
 });
 
@@ -292,8 +463,8 @@ const arr = new ArrowLine({
   arrowHeight: 30, // 线段末端箭头等腰三角形高，默认20
   arrowWidth: 10, // 线段末端箭头等腰三角形宽，默认10
   head: true, // 是否在线段开始处绘制箭头
-  headArrowWidth: 10 // 线段开始处箭头等腰三角形宽，默认20，仅head为true时生效
-  headArrowHeight: 30 // 线段开始处箭头等腰三角形高，默认10，仅head为true时生效
+  headArrowWidth: 10, // 线段开始处箭头等腰三角形宽，默认20，仅head为true时生效
+  headArrowHeight: 30, // 线段开始处箭头等腰三角形高，默认10，仅head为true时生效
   color: 'red',
 })
 ```
@@ -413,7 +584,7 @@ const custom = new CustomShape({
     绘制函数，如果不传最后一个该函数的话，则该函数内最好不要设置样式，
     样式统一在构造函数第一个参数的style属性中设置，否则会影响点击检测
 
-    该绘制函数内的画布绘画原点及上面传入的x,y属性
+    该绘制函数内的画布绘画原点即是上面传入的x,y属性
     因此，ctx.rect(0, 0, 80, 80)画出来的矩形实际上在画布中左上角的位置是(60, 60)
   */
   ctx.rect(0, 0, 80, 80)
