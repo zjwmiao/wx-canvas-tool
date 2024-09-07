@@ -1,6 +1,6 @@
 {
   "name": "wx-canvas-tool",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "only for wechat miniprogram",
   "main": "dist/index.js",
   "files": [
