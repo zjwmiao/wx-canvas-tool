@@ -36,6 +36,8 @@
 
 ## 基本使用
 
+微信小程序导入[可以看](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)
+
 ### uniapp
 
 ```html
