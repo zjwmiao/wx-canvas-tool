@@ -36,7 +36,26 @@
 
 ## 基本使用
 
-微信小程序导入[可以看](https://developers.weixin.qq.com/miniprogram/dev/devtools/npm.html)
+### 微信小程序原生开发导入
+
+1. 如果项目根目录没有`package.json`，在根目录执行`npm init -y`
+
+2. 执行`npm install wx-canvas-tool`
+
+3. 在根目录的`project.config.json`文件里的`setting`配置里添加
+
+    ```
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./miniprogram/"
+      }
+    ],
+    ```
+
+4. 微信开发者工具点击工具 -> 构建npm
+
+5. 项目中用require导入使用`const { CanvasTool, Rect } = require('wx-canvas-tool');`
 
 ### uniapp
 
