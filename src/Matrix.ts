@@ -1,12 +1,48 @@
 const R = Math.PI / 180
 
 export class Matrix {
-  a: number = 1 // 0
-  b: number = 0 // 1
-  c: number = 0 // 2
-  d: number = 1 // 3
+  private _a: number = 1 // 0
+  private _b: number = 0 // 1
+  private _c: number = 0 // 2
+  private _d: number = 1 // 3
   e: number = 0 // 4
   f: number = 0 // 5
+
+  get a() {
+    return this._a
+  }
+
+  set a(val: number) {
+    this._a = val
+    this._scaleCache.scaleX = null
+  }
+
+  get c() {
+    return this._c
+  }
+
+  set c(val: number) {
+    this._c = val
+    this._scaleCache.scaleX = null
+  }
+
+  get b() {
+    return this._b
+  }
+
+  set b(val: number) {
+    this._b = val
+    this._scaleCache.scaleY = null
+  }
+
+  get d() {
+    return this._d
+  }
+
+  set d(val: number) {
+    this._d = val
+    this._scaleCache.scaleY = null
+  }
 
   static translate(out: Matrix, original: Matrix, x: number, y: number) {
     out.a = original.a
@@ -87,12 +123,17 @@ export class Matrix {
     return this.f
   }
 
+  private _scaleCache = {
+    scaleX: null as number | null,
+    scaleY: null as number | null,
+  }
+
   getScaleX() {
-    return Math.sign(this.a) * Math.sqrt(Math.pow(this.a, 2) + Math.pow(this.c, 2))
+    return (this._scaleCache.scaleX ??= Math.sign(this.a) * Math.sqrt(Math.pow(this.a, 2) + Math.pow(this.c, 2)))
   }
 
   getScaleY() {
-    return Math.sign(this.d) * Math.sqrt(Math.pow(this.b, 2) + Math.pow(this.d, 2))
+    return (this._scaleCache.scaleY ??= Math.sign(this.d) * Math.sqrt(Math.pow(this.b, 2) + Math.pow(this.d, 2)))
   }
 
   getRotation(degree = false) {

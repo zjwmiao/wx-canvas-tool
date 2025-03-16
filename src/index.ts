@@ -107,17 +107,18 @@ class CanvasTool extends Transformable {
   private pageInstance: any
   private prevFingerX: number = null
   private prevFingerY: number = null
-  private draggingAnimationId: number = null
   private zoomCenter: Point = null
   private lastDiff: number = null
   private rgb: Generator
   private dpr: number
   private draggingShape: Shape
-  private animExecutorFunc: (callback: (...args: any[]) => any) => number
-  private animStopFunc: (id: number) => void
+  private raf: (callback: (...args: any[]) => any) => number
+  private caf: (id: number) => void
+  private rafId?: number
+  private animating = false
   private frame = () => {
     this.update()
-    this.draggingAnimationId = null
+    this.animating = false
   }
   private offscreen: WechatMiniprogram.OffscreenCanvas
   private shapeMap = new Map<string, Shape>()
@@ -134,8 +135,8 @@ class CanvasTool extends Transformable {
     getNodeInfo(this.pageInstance, this.id).then(nodeInfo => {
       const { node, width, height } = nodeInfo
       this.canvas = node
-      this.animExecutorFunc = this.canvas.requestAnimationFrame.bind(this.canvas)
-      this.animStopFunc = this.canvas.cancelAnimationFrame.bind(this.canvas)
+      this.raf = this.canvas.requestAnimationFrame.bind(this.canvas)
+      this.caf = this.canvas.cancelAnimationFrame.bind(this.canvas)
       this.ctx = this.canvas.getContext('2d')
       if (config.globalStyles) Object.assign(this.ctx, config.globalStyles)
       const dpr = wx.getWindowInfo().pixelRatio
@@ -263,8 +264,10 @@ class CanvasTool extends Transformable {
       }
       this.prevFingerX = mX
       this.prevFingerY = mY
-      if (this.draggingAnimationId) this.animStopFunc(this.draggingAnimationId)
-      this.draggingAnimationId = this.animExecutorFunc(this.frame)
+      if (!this.animating) {
+        this.animating = true
+        this.rafId = this.raf(this.frame)
+      }
     } else if (touches.length === 2) {
       if (!this.zoomCenter) return
       const diff = Math.abs(touches[0].clientX - touches[1].clientX) + Math.abs(touches[0].clientY - touches[1].clientY)
@@ -275,8 +278,10 @@ class CanvasTool extends Transformable {
       const step = diff / this.lastDiff
       this.scaleAt(step, step, this.zoomCenter.x, this.zoomCenter.y)
       this.lastDiff = diff
-      if (this.draggingAnimationId) this.animStopFunc(this.draggingAnimationId)
-      this.draggingAnimationId = this.animExecutorFunc(this.frame)
+      if (!this.animating) {
+        this.animating = true
+        this.rafId = this.raf(this.frame)
+      }
     }
   }
 
@@ -291,8 +296,8 @@ class CanvasTool extends Transformable {
         frame()
         this.update()
       },
-      this.animExecutorFunc,
-      this.animStopFunc
+      this.raf,
+      this.caf
     )
   }
 
@@ -301,7 +306,7 @@ class CanvasTool extends Transformable {
     const touches = event.touches
     if (touches.length === 1) {
       const shape = await this.getTouchPointShape(touches[0].clientX, touches[0].clientY)
-      if (shape && shape.draggable) {
+      if (shape?.draggable) {
         this.draggingShape = shape
       }
     } else if (touches.length === 2 && this.zoomable) {
@@ -310,6 +315,8 @@ class CanvasTool extends Transformable {
   }
 
   onTouchend() {
+    this.caf(this.rafId)
+    this.animating = false
     this.prevFingerX = null
     this.prevFingerY = null
     this.lastDiff = null
